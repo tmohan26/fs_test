@@ -1,0 +1,45 @@
+version: "3.9"
+services:
+  fastapi:
+    build: ../docker/fastapi
+    env_file: ../.env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [internal]
+
+  db:
+    extends: {file: ../docker/supabase/docker-compose.yml, service: db}
+    networks: [internal]
+  auth:
+    extends: {file: ../docker/supabase/docker-compose.yml, service: auth}
+    networks: [internal]
+  rest:
+    extends: {file: ../docker/supabase/docker-compose.yml, service: rest}
+    networks: [internal]
+  realtime:
+    extends: {file: ../docker/supabase/docker-compose.yml, service: realtime}
+    networks: [internal]
+  storage:
+    extends: {file: ../docker/supabase/docker-compose.yml, service: storage}
+    networks: [internal]
+  imgproxy:
+    extends: {file: ../docker/supabase/docker-compose.yml, service: imgproxy}
+    networks: [internal]
+  studio:
+    extends: {file: ../docker/supabase/docker-compose.yml, service: studio}
+    networks: [internal]
+  kong:
+    extends: {file: ../docker/supabase/docker-compose.yml, service: kong}
+    networks: [internal]
+
+  nginx-proxy-manager:
+    extends:
+      file: ../docker/nginx-proxy-manager/docker-compose.partial.yml
+      service: nginx-proxy-manager
+    depends_on: [fastapi]
+    networks: [public, internal]
+
+networks:
+  internal: {driver: bridge}
+  public: {driver: bridge}

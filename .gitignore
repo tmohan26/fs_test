@@ -1,0 +1,14 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Docker volumes
+data/
+
+# Environment variables
+.env
+
+# IDE
+.vscode/
+.idea/

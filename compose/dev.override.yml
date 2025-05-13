@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  fastapi:
+    volumes:
+      - ../src/:/app/src
+    command: >
+      uvicorn app.main:create_app --host 0.0.0.0 --port 8000 --reload
+    ports: ["8000:8000"]
+  db:
+    environment: {POSTGRES_PASSWORD: postgres}
+    ports: ["54322:5432"]
+  studio:
+    ports: ["54323:3000"]

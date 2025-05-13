@@ -1,0 +1,77 @@
+version: "3.9"
+services:
+  db:
+    image: supabase/postgres:15.1.0
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: postgres
+    volumes:
+      - ../../data/pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth:
+    image: supabase/gotrue:v2.156.0
+    depends_on: [db]
+    environment:
+      GOTRUE_JWT_SECRET: super-secret-dev
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/postgres
+    ports: ["9999:9999"]
+
+  rest:
+    image: supabase/postgrest:v12.0.1
+    depends_on: [db]
+    environment:
+      PGRST_DB_URI: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/postgres
+      PGRST_DB_ANON_ROLE: anon
+    ports: ["3000:3000"]
+
+  realtime:
+    image: supabase/realtime:v2.25.0
+    depends_on: [db]
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DB_NAME: postgres
+    ports: ["4000:4000"]
+
+  storage:
+    image: supabase/storage-api:v0.37.0
+    depends_on: [db]
+    environment:
+      ANON_KEY: dev-anon-key
+      SERVICE_KEY: dev-service-key
+      POSTGREST_URL: http://rest:3000
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/postgres
+    ports: ["5000:5000"]
+
+  imgproxy:
+    image: darthsim/imgproxy:v3.15
+    environment:
+      IMGPROXY_LOCAL_FILESYSTEM_ROOT: /workspace
+    volumes:
+      - ../../data/storage:/workspace
+    ports: ["5001:8080"]
+
+  studio:
+    image: supabase/studio:20240509-4d8f209
+    depends_on: [db]
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports: ["54323:3000"]
+
+  kong:
+    image: kong:3.6.0
+    depends_on: [db]
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: db
+      KONG_PG_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports: ["8000:8000"]
